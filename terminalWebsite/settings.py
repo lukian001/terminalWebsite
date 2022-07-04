@@ -15,7 +15,7 @@ SECRET_KEY = 'django-insecure-bk1s23ptuxdr1j3_cx*2$ez@2re14cw3zw=h%pj%qt4b#qzz#0
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['looki-terminal-website']
 
 # Application definition
 
