@@ -34,6 +34,6 @@ def verify(request):
     if command and command in enum:
         template = render_to_string(command + '.html')
     else:
-        template = render_to_string('clear.html')
+        template = render_to_string('command_doesnt_exists.html')
 
     return JsonResponse(template, safe=False)

@@ -5,6 +5,8 @@
     <script>
         let images = {{ images|safe }};
         let commands = {{ commands|safe }};
+        let commandHistory = [];
+        let commandNumber = commandHistory.length;
         let len = images.length;
     </script>
 
@@ -15,46 +17,22 @@
     </head>
 
     <body style="overflow: hidden" id="bodyhehe">
-        <div class="btn-group float-right" style="margin-top: 3px; margin-right: 4px">
-            <button class="btn btn-outline-light" onclick="changeWallpaper()" id="prev_bg"> Change wallpaper </button>
-        </div>
+{#        <div class="btn-group float-right" style="margin-top: 3px; margin-right: 4px">#}
+{#            <a type="button" onclick="changeWallpaper()" id="prev_bg" style="color: white"> Change wallpaper </a>#}
+{#        </div>#}
 
         <div class="h-100 d-flex align-items-center justify-content-center">
-            <div style="width: 50%; height: 50%; max-height: 50%; max-width: 50%; border-radius: 8px; background: rgba(0, 0, 0, 0.75);backdrop-filter: blur(10px)">
+            <div style="width: 50%; height: 50%; max-height: 50%; max-width: 50%; border-radius: 8px; background: rgba(0, 0, 0, 0.75);backdrop-filter: blur(10px); padding: 5px">
                 <div class="input-line" style="color: white; overflow: auto; max-height: 100%">
-                    <div id="output" style="margin: 5px ; word-wrap: break-word">
-                        <p> Welcome, <\your name>! <br> How are you? </p>
-                        <p> Type "help" for more info! </p>
+                    <div id="output" style="font-family: monospace; margin: 5px ; word-wrap: break-word">
+                        {% include 'welcome.html' %}
                     </div>
-                    <form style="margin: 5px; width: 98%;" id="input_command">
+                    <form style="margin: 5px; width: 98%;" id="input_command" onclick="focusInput()">
                         <label style="width: 3%; font-size: 14px; min-width: 3%"> -> </label>
-                            <input autocomplete="off" type="text" style="box-sizing: content-box; border: none; font-size: 14px; background: transparent; color: white; outline: none;" oninput="autoComplete()" id="command_input">
-                        <label id="auto-complete" style="color: gray">
+                            <input autocomplete="off" type="text" style="font-family: monospace; box-sizing: content-box; border: none; font-size: 14px; background: transparent; color: white; outline: none;" oninput="autoComplete()" id="command_input">
+                        <label id="auto-complete" style="color: gray; font-size: 14px">
                         </label>
                     </form>
-                    <script>
-                        $("#input_command").on('submit', function (e) {
-                            e.preventDefault();
-
-                            $("#output").scrollTop($("#output").prop('scrollHeight'))
-
-                            $.ajax({
-                                type: 'POST',
-                                url: "{% url 'verify_input' %}",
-                                data: {
-                                    command: $("#command_input").val()
-                                },
-                                dataType: "json",
-                                success: function (data) {
-                                    if(data.length === 0) {
-                                        console.log("clear")
-                                    } else {
-                                        console.log(data)
-                                    }
-                                }
-                            })
-                        })
-                    </script>
                 </div>
             </div>
         </div>
@@ -63,7 +41,8 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
 
     <script>
-        document.body.style.backgroundImage = "url({% static 'placeholder' %})".replace('placeholder', images[16]);
+        document.body.style.backgroundImage = "url({% static 'placeholder' %})".replace('placeholder', images[generateRandom(len)]);
+        document.getElementById("command_input").style.width = "1ch";
         document.getElementById("command_input").focus();
 
         function changeWallpaper() {
@@ -71,10 +50,18 @@
             document.getElementById("command_input").focus();
         }
 
+        function focusInput() {
+            document.getElementById("command_input").focus();
+        }
+
         function autoComplete() {
             let input = document.getElementById("command_input");
             let autoComplete = document.getElementById("auto-complete");
-            input.style.width = input.value.length + "ch";
+            if(input.value.length === 0) {
+                input.style.width = "1ch";
+            } else {
+                input.style.width = input.value.length + "ch";
+            }
 
             let result = commands.filter(command => command.startsWith(input.value));
 
@@ -92,6 +79,49 @@
 
             return rand;
         }
+
+        $('#input_command').on('keydown', function (e) {
+            let input = $("#command_input");
+            if(e.keyCode === 38) {
+                input.val(commandHistory[commandNumber--]);
+            }
+
+            if(e.keyCode === 40) {
+                input.val(commandHistory[++commandNumber]);
+            }
+        })
+
+        $('#input_command').on('submit', function (e) {
+            e.preventDefault();
+
+            let inputCommand = $("#command_input").val();
+
+            $.ajax({
+                type: 'POST',
+                url: "{% url 'verify_input' %}",
+                data: {
+                    command: inputCommand,
+                },
+                dataType: "json",
+                success: function (data) {
+                    if(data.length === 0) {
+                        $("#output").html(data);
+                    } else {
+                        if(data === 'Background changed') {
+                            changeWallpaper();
+                        }
+                            $("#output").append(data);
+                    }
+
+                    $("#input-line").scrollTop($("#input-line").prop('scrollHeight'))
+                    commandHistory.push(inputCommand)
+                    commandNumber = commandHistory.length;
+                    $("#command_input").val("");
+                    $("#auto-complete").empty();
+                }
+            })
+        })
+
     </script>
     </body>
 </html>
