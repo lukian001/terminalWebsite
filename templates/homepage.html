@@ -1,6 +1,6 @@
 {% load static %}
 
-<html>
+<html lang="en">
 
     <script>
         let images = {{ images|safe }};
@@ -22,13 +22,13 @@
 {#        </div>#}
 
         <div class="h-100 d-flex align-items-center justify-content-center">
-            <div style="width: 50%; height: 50%; max-height: 50%; max-width: 50%; border-radius: 8px; background: rgba(0, 0, 0, 0.75);backdrop-filter: blur(10px); padding: 5px">
+            <div style="width: 50%; height: 50%; max-height: 50%; max-width: 50%; border-radius: 8px; background: rgba(0, 0, 0, 0.75);backdrop-filter: blur(10px); padding: 5px" id="ceva_div">
                 <div class="input-line" style="color: white; overflow: auto; max-height: 100%">
-                    <div id="output" style="font-family: monospace; margin: 5px ; word-wrap: break-word">
+                    <div id="output" style="font-family: monospace; margin: 5px ; word-wrap: break-word; font-size: 14px">
                         {% include 'welcome.html' %}
                     </div>
                     <form style="margin: 5px; width: 98%;" id="input_command" onclick="focusInput()">
-                        <label style="width: 3%; font-size: 14px; min-width: 3%"> -> </label>
+                        <label style="width: 2%; font-size: 14px; min-width: 3%" for="command_input"> -> </label>
                             <input autocomplete="off" type="text" style="font-family: monospace; box-sizing: content-box; border: none; font-size: 14px; background: transparent; color: white; outline: none;" oninput="autoComplete()" id="command_input">
                         <label id="auto-complete" style="color: gray; font-size: 14px">
                         </label>
@@ -84,10 +84,12 @@
             let input = $("#command_input");
             if(e.keyCode === 38) {
                 input.val(commandHistory[commandNumber--]);
+                input.width(input.val().length + "ch");
             }
 
             if(e.keyCode === 40) {
                 input.val(commandHistory[++commandNumber]);
+                input.width(input.val().length + "ch");
             }
         })
 
@@ -95,6 +97,7 @@
             e.preventDefault();
 
             let inputCommand = $("#command_input").val();
+            $("#output").append("-> " + inputCommand);
 
             $.ajax({
                 type: 'POST',
@@ -107,19 +110,23 @@
                     if(data.length === 0) {
                         $("#output").html(data);
                     } else {
-                        if(data === 'Background changed') {
+                        if(data.indexOf('Background changed') >= 1) {
                             changeWallpaper();
                         }
                             $("#output").append(data);
                     }
 
-                    $("#input-line").scrollTop($("#input-line").prop('scrollHeight'))
+                    if(commandHistory.includes(inputCommand)) {
+                        commandHistory = commandHistory.filter(function(e) { return e !== inputCommand })
+                    }
                     commandHistory.push(inputCommand)
                     commandNumber = commandHistory.length;
                     $("#command_input").val("");
                     $("#auto-complete").empty();
                 }
             })
+
+            $("#ceva_div").scrollTop($("#ceva_div").prop('scrollHeight'))
         })
 
     </script>

@@ -5,7 +5,7 @@ from django.template.loader import render_to_string
 import os
 
 from . import settings
-from . import Models
+from . import models
 
 
 def get_all_images():
@@ -20,19 +20,34 @@ def get_all_images():
 
 def homepage(request):
     images = get_all_images()
-    enum = Models.Commands.list()
+    enum = models.Commands.list()
+    commands = []
+    for en in enum:
+        commands.append(en.name)
     return render(request, 'homepage.html', {'images': images,
-                                             'commands': enum,
+                                             'commands': commands,
                                              })
 
 
 @csrf_exempt
 def verify(request):
-    enum = Models.Commands.list()
+    enum = models.Commands.list()
+    commands = []
+    for en in enum:
+        commands.append(en.name)
     command = request.POST.get('command', None)
 
-    if command and command in enum:
-        template = render_to_string(command + '.html')
+    if command and command in commands:
+        if command == 'help':
+            template = render_to_string('help.html', {
+                'commands': enum
+            })
+        elif command == 'social':
+            template = render_to_string('social.html', {
+                'socials': models.Socials.list()
+            })
+        else:
+            template = render_to_string(command + '.html')
     else:
         template = render_to_string('command_doesnt_exists.html')
 
